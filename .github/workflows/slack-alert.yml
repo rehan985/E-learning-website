@@ -1,0 +1,42 @@
+name: Slack Notification
+
+on:
+  workflow_call:
+    inputs:
+      status:
+        description: 'The status of the job (e.g., Success or Failure)'
+        required: true
+        type: string
+      message:
+        description: 'The message to send to Slack'
+        required: true
+        type: string
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Slack Notification
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          STATUS: ${{ inputs.status }}
+          MESSAGE: ${{ inputs.message }}
+        run: |
+          payload="{
+            \"attachments\": [
+              {
+                \"color\": \"#FF0000\",
+                \"blocks\": [
+                  {
+                    \"type\": \"section\",
+                    \"text\": {
+                      \"type\": \"mrkdwn\",
+                      \"text\": \"*Status:* $STATUS\n*Message:* $MESSAGE\"
+                    }
+                  }
+                ]
+              }
+            ]
+          }"
+          curl -X POST -H 'Content-type: application/json' --data "$payload" $SLACK_WEBHOOK_URL
