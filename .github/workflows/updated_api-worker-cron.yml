@@ -3,6 +3,8 @@ name: Deploy Services on Click
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
 
 jobs:
   determine-affected:
