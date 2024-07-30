@@ -10,9 +10,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      api-image: ${{ steps.api-image.outputs.image }}
-      worker-image: ${{ steps.worker-image.outputs.image }}
-      cron-image: ${{ steps.cron-image.outputs.image }}
+      api-image: ${{ steps.build-api.outputs.image }}
+      worker-image: ${{ steps.build-worker.outputs.image }}
+      cron-image: ${{ steps.build-cron.outputs.image }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -64,8 +64,34 @@ jobs:
             ./apps/worker/Dockerfile
             ./apps/cron/Dockerfile
 
-  deploy:
+  prisma-migrate:
+    runs-on: ubuntu-latest
     needs: build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run Prisma migrations
+        run: pnpm prisma:no-doppler migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  deploy:
+    needs: [build, prisma-migrate]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
