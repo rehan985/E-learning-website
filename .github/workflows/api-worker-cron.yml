@@ -1,4 +1,4 @@
-name: Deploy Services on Click
+name: Main
 
 on:
   workflow_dispatch:
