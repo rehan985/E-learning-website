@@ -1,4 +1,4 @@
-name: Main
+name: Deploy Services on Click or Commit
 
 on:
   workflow_dispatch:
@@ -54,6 +54,13 @@ jobs:
           npx nx build cron
           echo "Cron image=ghcr.io/${{ github.repository }}/cron:latest" >> $GITHUB_ENV
           echo "::set-output name=image::ghcr.io/${{ github.repository }}/cron:latest"
+
+      - name: Build Frontend
+        id: build-frontend
+        run: |
+          npx nx build frontend
+          echo "Frontend built" >> $GITHUB_ENV
+          echo "::set-output name=built::true"
 
       - name: Save Docker images as artifacts
         uses: actions/upload-artifact@v3
@@ -165,6 +172,11 @@ jobs:
         with:
           app_name: joinvalley-v2-cron
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Deploy Frontend to Vercel
+        if: needs.build.outputs.built == 'true'
+        run: |
+          npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
 
   notify-on-failure:
     runs-on: ubuntu-latest
