@@ -2,6 +2,14 @@ name: Deploy Services on Click or Commit
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'staging'
+        options:
+          - staging
+          - production
   push:
     branches:
       - main
@@ -95,7 +103,7 @@ jobs:
       - name: Run Prisma migrations
         run: pnpm prisma:no-doppler migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets[format('DATABASE_URL_{0}', github.event.inputs.environment.upper())] }}
 
   deploy:
     needs: [build, prisma-migrate]
@@ -134,7 +142,7 @@ jobs:
         if: needs.build.outputs.api-image
         uses: digitalocean/app_action@v1.1.6
         with:
-          app_name: joinvalley-v2-api
+          app_name: joinvalley-v2-api-${{ github.event.inputs.environment }}
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Build and Push Docker Image for Worker
@@ -152,7 +160,7 @@ jobs:
         if: needs.build.outputs.worker-image
         uses: digitalocean/app_action@v1.1.6
         with:
-          app_name: joinvalley-v2-worker
+          app_name: joinvalley-v2-worker-${{ github.event.inputs.environment }}
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Build and Push Docker Image for Cron
@@ -170,13 +178,14 @@ jobs:
         if: needs.build.outputs.cron-image
         uses: digitalocean/app_action@v1.1.6
         with:
-          app_name: joinvalley-v2-cron
+          app_name: joinvalley-v2-cron-${{ github.event.inputs.environment }}
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Deploy Frontend to Vercel
         if: needs.build.outputs.built == 'true'
         run: |
           npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+          npx vercel --env=$GITHUB_ENV --token ${{ secrets.VERCEL_TOKEN }}
 
   notify-on-failure:
     runs-on: ubuntu-latest
