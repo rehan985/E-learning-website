@@ -1,0 +1,41 @@
+
+name: Parallel Jobs Workflow
+
+on: [push, pull_request]
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Job 1 - Run tests
+        run: |
+          echo "Running tests in Job 1"
+          # Add your test commands here
+          sleep 10
+
+  job2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Job 2 - Build project
+        run: |
+          echo "Building project in Job 2"
+          # Add your build commands here
+          sleep 10
+
+  job3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Job 3 - Deploy project
+        run: |
+          echo "Deploying project in Job 3"
+          # Add your deployment commands here
+          sleep 10
